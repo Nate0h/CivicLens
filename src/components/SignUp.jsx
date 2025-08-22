@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 function SignUp() {
   const [formData, setFormData] = useState({
@@ -10,6 +11,10 @@ function SignUp() {
     confirmPassword: ''
   })
   const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
+  
+  const { register } = useAuth()
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -59,13 +64,23 @@ function SignUp() {
     return newErrors
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const newErrors = validateForm()
     
     if (Object.keys(newErrors).length === 0) {
-      // Handle sign-up logic here
-      console.log('Sign up attempt:', formData)
+      setLoading(true)
+      setErrors({})
+      
+      const result = await register(formData)
+      
+      if (result.success) {
+        navigate('/dashboard')
+      } else {
+        setErrors({ general: result.error })
+      }
+      
+      setLoading(false)
     } else {
       setErrors(newErrors)
     }
@@ -83,6 +98,11 @@ function SignUp() {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {errors.general && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              {errors.general}
+            </div>
+          )}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -199,9 +219,10 @@ function SignUp() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Account
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </div>
 
