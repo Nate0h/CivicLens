@@ -75,7 +75,7 @@ function SignUp() {
       const result = await register(formData)
       
       if (result.success) {
-        navigate('/dashboard')
+        navigate('/onboarding/basic-info')
       } else {
         setErrors({ general: result.error })
       }

@@ -6,6 +6,10 @@ import Home from './components/Home'
 import SignIn from './components/SignIn'
 import SignUp from './components/SignUp'
 import Dashboard from './components/Dashboard'
+import BasicInfo from './components/onboarding/BasicInfo'
+import PriorityIssues from './components/onboarding/PriorityIssues'
+import OpinionSurvey from './components/onboarding/OpinionSurvey'
+import Review from './components/onboarding/Review'
 
 function App() {
   return (
@@ -20,6 +24,38 @@ function App() {
             element={
               <AuthGuard>
                 <Dashboard />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/onboarding/basic-info" 
+            element={
+              <AuthGuard>
+                <BasicInfo />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/onboarding/priority-issues" 
+            element={
+              <AuthGuard>
+                <PriorityIssues />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/onboarding/opinion-survey" 
+            element={
+              <AuthGuard>
+                <OpinionSurvey />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/onboarding/review" 
+            element={
+              <AuthGuard>
+                <Review />
               </AuthGuard>
             } 
           />
