@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StepTracker from '../StepTracker'
 
@@ -16,6 +16,26 @@ function BasicInfo() {
   })
 
   const navigate = useNavigate()
+
+  // Load saved form data on component mount
+  useEffect(() => {
+    const savedFormData = localStorage.getItem('onboarding_basic_info')
+    if (savedFormData) {
+      try {
+        const parsedFormData = JSON.parse(savedFormData)
+        setFormData(parsedFormData)
+      } catch (error) {
+        console.error('Error loading saved basic info:', error)
+      }
+    }
+  }, [])
+
+  // Save form data whenever it changes
+  useEffect(() => {
+    if (Object.values(formData).some(value => value !== '' && value !== false)) {
+      localStorage.setItem('onboarding_basic_info', JSON.stringify(formData))
+    }
+  }, [formData])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
