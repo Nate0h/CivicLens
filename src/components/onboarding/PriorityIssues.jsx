@@ -8,13 +8,16 @@ function PriorityIssues() {
 
   // Load saved selections on component mount
   useEffect(() => {
-    const savedSelections = localStorage.getItem('onboarding_priority_issues')
-    if (savedSelections) {
-      try {
-        const parsedSelections = JSON.parse(savedSelections)
-        setSelectedIssues(parsedSelections)
-      } catch (error) {
-        console.error('Error loading saved priority issues:', error)
+    const sessionId = sessionStorage.getItem('user_session_id')
+    if (sessionId) {
+      const savedSelections = localStorage.getItem(`onboarding_priority_issues_${sessionId}`)
+      if (savedSelections) {
+        try {
+          const parsedSelections = JSON.parse(savedSelections)
+          setSelectedIssues(parsedSelections)
+        } catch (error) {
+          console.error('Error loading saved priority issues:', error)
+        }
       }
     }
   }, [])
@@ -22,7 +25,10 @@ function PriorityIssues() {
   // Save selections whenever they change
   useEffect(() => {
     if (selectedIssues.length > 0) {
-      localStorage.setItem('onboarding_priority_issues', JSON.stringify(selectedIssues))
+      const sessionId = sessionStorage.getItem('user_session_id')
+      if (sessionId) {
+        localStorage.setItem(`onboarding_priority_issues_${sessionId}`, JSON.stringify(selectedIssues))
+      }
     }
   }, [selectedIssues])
 

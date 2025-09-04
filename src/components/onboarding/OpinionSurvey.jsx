@@ -83,31 +83,49 @@ function OpinionSurvey() {
     ]
   }
 
+  // Generate questions for selected issues
+  const generateSurveyQuestions = (selectedIssues) => {
+    const questions = []
+    selectedIssues.forEach(issueId => {
+      if (questionBank[issueId]) {
+        questionBank[issueId].forEach(question => {
+          questions.push({
+            id: `${issueId}_${questions.length}`,
+            topic: issueId,
+            text: question
+          })
+        })
+      }
+    })
+    return questions
+  }
+
   // Load selected issues and generate questions
   useEffect(() => {
-    const savedSelections = localStorage.getItem('onboarding_priority_issues')
+    const sessionId = sessionStorage.getItem('user_session_id')
+    if (!sessionId) {
+      navigate('/onboarding/basic-info')
+      return
+    }
+
+    const savedSelections = localStorage.getItem(`onboarding_priority_issues_${sessionId}`)
     if (savedSelections) {
       try {
         const parsedSelections = JSON.parse(savedSelections)
         setSelectedIssues(parsedSelections)
         
         // Generate questions based on selected issues
-        const questions = []
-        parsedSelections.forEach(issueId => {
-          if (questionBank[issueId]) {
-            questionBank[issueId].forEach((question, index) => {
-              questions.push({
-                id: `${issueId}_${index}`,
-                topic: issueId,
-                text: question,
-                topicTitle: getTopicTitle(issueId)
-              })
-            })
-          }
-        })
+        const questions = generateSurveyQuestions(parsedSelections)
         setSurveyQuestions(questions)
+        
+        // Load saved responses
+        const savedResponses = localStorage.getItem(`onboarding_survey_responses_${sessionId}`)
+        if (savedResponses) {
+          setResponses(JSON.parse(savedResponses))
+        }
+        
       } catch (error) {
-        console.error('Error loading priority issues:', error)
+        console.error('Error loading survey data:', error)
         navigate('/onboarding/priority-issues')
       }
     } else {
@@ -115,23 +133,12 @@ function OpinionSurvey() {
     }
   }, [navigate])
 
-  // Load saved responses
-  useEffect(() => {
-    const savedResponses = localStorage.getItem('onboarding_survey_responses')
-    if (savedResponses) {
-      try {
-        const parsedResponses = JSON.parse(savedResponses)
-        setResponses(parsedResponses)
-      } catch (error) {
-        console.error('Error loading saved responses:', error)
-      }
-    }
-  }, [])
-
-  // Save responses when they change
   useEffect(() => {
     if (Object.keys(responses).length > 0) {
-      localStorage.setItem('onboarding_survey_responses', JSON.stringify(responses))
+      const sessionId = sessionStorage.getItem('user_session_id')
+      if (sessionId) {
+        localStorage.setItem(`onboarding_survey_responses_${sessionId}`, JSON.stringify(responses))
+      }
     }
   }, [responses])
 

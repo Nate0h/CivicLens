@@ -12,14 +12,23 @@ function BasicInfo() {
     familyStatus: '',
     healthcareCoverage: '',
     hasChildren: false,
-    futureChanges: ''
+    futureChanges: '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    zipCode: ''
   })
 
   const navigate = useNavigate()
 
   // Load saved form data on component mount
   useEffect(() => {
-    const savedFormData = localStorage.getItem('onboarding_basic_info')
+    // Generate a unique session ID for this user session
+    const sessionId = sessionStorage.getItem('user_session_id') || 
+                     `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    sessionStorage.setItem('user_session_id', sessionId)
+    
+    const savedFormData = localStorage.getItem(`onboarding_basic_info_${sessionId}`)
     if (savedFormData) {
       try {
         const parsedFormData = JSON.parse(savedFormData)
@@ -33,7 +42,10 @@ function BasicInfo() {
   // Save form data whenever it changes
   useEffect(() => {
     if (Object.values(formData).some(value => value !== '' && value !== false)) {
-      localStorage.setItem('onboarding_basic_info', JSON.stringify(formData))
+      const sessionId = sessionStorage.getItem('user_session_id')
+      if (sessionId) {
+        localStorage.setItem(`onboarding_basic_info_${sessionId}`, JSON.stringify(formData))
+      }
     }
   }, [formData])
 
@@ -226,6 +238,137 @@ function BasicInfo() {
                   <option value="none">None</option>
                   <option value="other">Other</option>
                 </select>
+              </div>
+            </div>
+
+            {/* Address Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Address <span className="text-gray-500 text-sm font-normal">(for election information)</span>
+              </h3>
+              <p className="text-sm text-gray-600">
+                We'll use this to show you relevant state election information and candidates.
+              </p>
+              
+              {/* Street Address */}
+              <div>
+                <label htmlFor="streetAddress" className="block text-sm font-medium text-gray-700 mb-2">
+                  Street Address
+                </label>
+                <input
+                  type="text"
+                  id="streetAddress"
+                  name="streetAddress"
+                  value={formData.streetAddress}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="e.g., 123 Main Street"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* City */}
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                    City/Town
+                  </label>
+                  <input
+                    type="text"
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="e.g., Anytown"
+                    required
+                  />
+                </div>
+
+                {/* State */}
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                    State
+                  </label>
+                  <select
+                    id="state"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    required
+                  >
+                    <option value="">Select state</option>
+                    <option value="AL">Alabama</option>
+                    <option value="AK">Alaska</option>
+                    <option value="AZ">Arizona</option>
+                    <option value="AR">Arkansas</option>
+                    <option value="CA">California</option>
+                    <option value="CO">Colorado</option>
+                    <option value="CT">Connecticut</option>
+                    <option value="DE">Delaware</option>
+                    <option value="FL">Florida</option>
+                    <option value="GA">Georgia</option>
+                    <option value="HI">Hawaii</option>
+                    <option value="ID">Idaho</option>
+                    <option value="IL">Illinois</option>
+                    <option value="IN">Indiana</option>
+                    <option value="IA">Iowa</option>
+                    <option value="KS">Kansas</option>
+                    <option value="KY">Kentucky</option>
+                    <option value="LA">Louisiana</option>
+                    <option value="ME">Maine</option>
+                    <option value="MD">Maryland</option>
+                    <option value="MA">Massachusetts</option>
+                    <option value="MI">Michigan</option>
+                    <option value="MN">Minnesota</option>
+                    <option value="MS">Mississippi</option>
+                    <option value="MO">Missouri</option>
+                    <option value="MT">Montana</option>
+                    <option value="NE">Nebraska</option>
+                    <option value="NV">Nevada</option>
+                    <option value="NH">New Hampshire</option>
+                    <option value="NJ">New Jersey</option>
+                    <option value="NM">New Mexico</option>
+                    <option value="NY">New York</option>
+                    <option value="NC">North Carolina</option>
+                    <option value="ND">North Dakota</option>
+                    <option value="OH">Ohio</option>
+                    <option value="OK">Oklahoma</option>
+                    <option value="OR">Oregon</option>
+                    <option value="PA">Pennsylvania</option>
+                    <option value="RI">Rhode Island</option>
+                    <option value="SC">South Carolina</option>
+                    <option value="SD">South Dakota</option>
+                    <option value="TN">Tennessee</option>
+                    <option value="TX">Texas</option>
+                    <option value="UT">Utah</option>
+                    <option value="VT">Vermont</option>
+                    <option value="VA">Virginia</option>
+                    <option value="WA">Washington</option>
+                    <option value="WV">West Virginia</option>
+                    <option value="WI">Wisconsin</option>
+                    <option value="WY">Wyoming</option>
+                  </select>
+                </div>
+
+                {/* Zip Code */}
+                <div>
+                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
+                    Zip Code
+                  </label>
+                  <input
+                    type="text"
+                    id="zipCode"
+                    name="zipCode"
+                    value={formData.zipCode}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="e.g., 12345"
+                    pattern="[0-9]{5}(-[0-9]{4})?"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
