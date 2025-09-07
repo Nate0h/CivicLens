@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getStateElectionData, formatAddressForAPI } from '../../services/googleCivicApi'
+import { getStateElectionDataByAddress, formatAddressForAPI, formatContest } from '../../services/ballotpediaElectionApi'
 
 function ElectionData() {
   const [electionData, setElectionData] = useState(null)
@@ -46,7 +46,7 @@ function ElectionData() {
         }
 
         // Fetch election data
-        const data = await getStateElectionData(addressString)
+        const data = await getStateElectionDataByAddress(addressString)
         setElectionData(data)
 
         // Load saved contest selections
@@ -57,7 +57,7 @@ function ElectionData() {
 
       } catch (err) {
         console.error('Error loading election data:', err)
-        setError('Failed to load election data. Please try again.')
+        setError(`Failed to load election data: ${err.message}. Please check your OpenAI API key and try again.`)
       } finally {
         setLoading(false)
       }
