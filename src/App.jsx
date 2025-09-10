@@ -11,6 +11,7 @@ import PriorityIssues from './components/onboarding/PriorityIssues'
 import OpinionSurvey from './components/onboarding/OpinionSurvey'
 import Review from './components/onboarding/Review'
 import Profile from './components/Profile'
+import TestResponsesAPI from './components/TestResponsesAPI'
 
 function App() {
   return (
@@ -18,8 +19,19 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route path="/test-responses" element={<TestResponsesAPI />} />
+          <Route 
+            path="/signin" 
+            element={
+              <SignIn />
+            } 
+          />
+          <Route 
+            path="/signup" 
+            element={
+              <SignUp />
+            } 
+          />
           <Route 
             path="/dashboard" 
             element={

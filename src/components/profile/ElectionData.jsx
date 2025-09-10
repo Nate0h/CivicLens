@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getStateElectionDataByAddress, formatAddressForAPI, formatContest } from '../../services/ballotpediaElectionApi'
+import { getElectionDataByAddress } from '../../services/ballotpediaResponsesApi'
 
 function ElectionData() {
   const [electionData, setElectionData] = useState(null)
@@ -35,7 +35,7 @@ function ElectionData() {
         let addressString = ''
         if (parsedBasicInfo.streetAddress) {
           // New granular format
-          addressString = formatAddressForAPI(parsedBasicInfo)
+          addressString = `${parsedBasicInfo.streetAddress}, ${parsedBasicInfo.city}, ${parsedBasicInfo.state} ${parsedBasicInfo.zipCode}`
         } else if (parsedBasicInfo.address) {
           // Legacy single address field
           addressString = parsedBasicInfo.address
@@ -46,7 +46,7 @@ function ElectionData() {
         }
 
         // Fetch election data
-        const data = await getStateElectionDataByAddress(addressString)
+        const data = await getElectionDataByAddress(addressString)
         setElectionData(data)
 
         // Load saved contest selections
@@ -125,7 +125,7 @@ function ElectionData() {
     )
   }
 
-  const hasContests = electionData?.contests && electionData.contests.length > 0
+  const hasElections = electionData?.elections && electionData.elections.length > 0
   const upcomingElections = electionData?.elections || []
 
   return (
@@ -167,20 +167,19 @@ function ElectionData() {
         </div>
       )}
 
-      {/* State Contests */}
-      {hasContests ? (
+      {/* Elections */}
+      {hasElections ? (
         <div className="space-y-6">
           <div className="mb-6">
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              State-Level Races & Ballot Measures
+              Gubernatorial Elections
             </h3>
             <p className="text-sm text-gray-600">
-              Track the races you're most interested in following.
+              Track the gubernatorial races in your state.
             </p>
           </div>
 
-          {electionData.contests.map((contest, index) => {
-            const formattedContest = formatContest(contest)
+          {electionData.elections.map((election, index) => {
             const isSelected = selectedContests.includes(index)
             
             return (
@@ -202,21 +201,19 @@ function ElectionData() {
                   />
                   <div className="ml-3 flex-1">
                     <h4 className="text-lg font-medium text-gray-900">
-                      {formattedContest.office}
+                      {election.name}
                     </h4>
                     
-                    {formattedContest.district && (
-                      <p className="text-sm text-gray-600 mb-2">
-                        District: {formattedContest.district.name}
-                      </p>
-                    )}
+                    <p className="text-sm text-gray-600 mb-2">
+                      Office: {election.office} | Election Date: {new Date(election.electionDay).toLocaleDateString()}
+                    </p>
 
                     {/* Candidates */}
-                    {formattedContest.candidates.length > 0 && (
+                    {election.candidates && election.candidates.length > 0 && (
                       <div className="mt-2">
                         <p className="text-sm font-medium text-gray-700 mb-1">Candidates:</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {formattedContest.candidates.map((candidate, candidateIndex) => (
+                          {election.candidates.map((candidate, candidateIndex) => (
                             <div key={candidateIndex} className="text-sm text-gray-600">
                               <span className="font-medium">{candidate.name}</span>
                               {candidate.party && (
@@ -225,20 +222,6 @@ function ElectionData() {
                             </div>
                           ))}
                         </div>
-                      </div>
-                    )}
-
-                    {/* Ballot Measure Text */}
-                    {formattedContest.referendumTitle && (
-                      <div className="mt-2">
-                        <p className="text-sm font-medium text-gray-700">
-                          {formattedContest.referendumTitle}
-                        </p>
-                        {formattedContest.referendumText && (
-                          <p className="text-xs text-gray-600 mt-1 line-clamp-3">
-                            {formattedContest.referendumText}
-                          </p>
-                        )}
                       </div>
                     )}
                   </div>
@@ -254,9 +237,9 @@ function ElectionData() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No State Elections Found</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No Elections Found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            There are currently no upcoming state-level elections in your area.
+            There are currently no upcoming gubernatorial elections in your area.
           </p>
         </div>
       )}
