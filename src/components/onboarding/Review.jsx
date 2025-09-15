@@ -6,12 +6,12 @@ function Review() {
   const navigate = useNavigate()
 
   const handleComplete = () => {
-    // Mark onboarding as complete and redirect to profile
+    // Mark onboarding as complete and redirect to dashboard
     const sessionId = sessionStorage.getItem('user_session_id')
     if (sessionId) {
       localStorage.setItem(`onboarding_completed_${sessionId}`, 'true')
     }
-    navigate('/profile')
+    navigate('/dashboard')
   }
 
   const handleBack = () => {

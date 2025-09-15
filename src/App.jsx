@@ -10,7 +10,6 @@ import BasicInfo from './components/onboarding/BasicInfo'
 import PriorityIssues from './components/onboarding/PriorityIssues'
 import OpinionSurvey from './components/onboarding/OpinionSurvey'
 import Review from './components/onboarding/Review'
-import Profile from './components/Profile'
 import TestResponsesAPI from './components/TestResponsesAPI'
 
 function App() {
@@ -69,14 +68,6 @@ function App() {
             element={
               <AuthGuard>
                 <Review />
-              </AuthGuard>
-            } 
-          />
-          <Route 
-            path="/profile" 
-            element={
-              <AuthGuard>
-                <Profile />
               </AuthGuard>
             } 
           />
