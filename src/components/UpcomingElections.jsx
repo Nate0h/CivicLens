@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getElectionDataByAddress } from '../services/ballotpediaResponsesApi'
+import { getUserSurveyData, validateUserDataForAnalysis } from '../services/candidateAnalysisApi'
 
 function UpcomingElections() {
+  const navigate = useNavigate()
   const [electionData, setElectionData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -100,6 +103,26 @@ function UpcomingElections() {
       return 'bg-yellow-100 text-yellow-800'
     }
     return 'bg-gray-100 text-gray-800'
+  }
+
+  const handleGetAnalysis = (election) => {
+    // Check if user has completed survey data
+    const sessionId = sessionStorage.getItem('user_session_id')
+    if (!sessionId) {
+      alert('Please complete the onboarding process first to get personalized analysis.')
+      return
+    }
+
+    const userSurveyData = getUserSurveyData(sessionId)
+    if (!validateUserDataForAnalysis(userSurveyData)) {
+      alert('Please complete the opinion survey in your onboarding to get personalized candidate analysis.')
+      return
+    }
+
+    // Navigate to analysis page with election data
+    navigate(`/analysis/${election.id}`, {
+      state: { electionData: election }
+    })
   }
 
   if (!userAddress) {
@@ -201,11 +224,19 @@ function UpcomingElections() {
                       <h3 className="text-lg font-medium text-gray-900">{election.name}</h3>
                       <p className="text-sm text-gray-600">{election.office}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        {formatDate(election.electionDay)}
-                      </p>
-                      <p className="text-xs text-gray-500">Election Day</p>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatDate(election.electionDay)}
+                        </p>
+                        <p className="text-xs text-gray-500">Election Day</p>
+                      </div>
+                      <button
+                        onClick={() => handleGetAnalysis(election)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        📊 Get Analysis
+                      </button>
                     </div>
                   </div>
                 </div>

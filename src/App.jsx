@@ -12,6 +12,7 @@ import OpinionSurvey from './components/onboarding/OpinionSurvey'
 import Review from './components/onboarding/Review'
 import TestResponsesAPI from './components/TestResponsesAPI'
 import TestCandidateAnalysis from './components/TestCandidateAnalysis'
+import CandidateAnalysis from './components/CandidateAnalysis'
 
 function App() {
   return (
@@ -21,6 +22,14 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/test-responses" element={<TestResponsesAPI />} />
           <Route path="/test-analysis" element={<TestCandidateAnalysis />} />
+          <Route 
+            path="/analysis/:electionId" 
+            element={
+              <AuthGuard>
+                <CandidateAnalysis />
+              </AuthGuard>
+            } 
+          />
           <Route 
             path="/signin" 
             element={

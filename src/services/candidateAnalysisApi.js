@@ -122,17 +122,17 @@ export const getCandidateAnalysis = async (electionData, userSurveyData) => {
       throw new Error('No priority topics found in user survey data')
     }
 
-    // Create the analysis request
-    const response = await createAnalysisResponse(electionData, userSurveyData)
+    // Create the analysis response
+    const responseData = await createAnalysisResponse(electionData, userSurveyData)
     
     // Poll for completion
-    const completedResponse = await pollResponseCompletion(response.id)
+    const completedResponse = await pollResponseCompletion(responseData.id)
     
-    // Extract and structure the analysis
-    const analysisData = await extractAnalysisData(completedResponse)
+    // Extract and structure the analysis data
+    const analysis = await extractAnalysisData(completedResponse)
     
     console.log('✅ Candidate analysis completed successfully')
-    return analysisData
+    return analysis
 
   } catch (error) {
     console.error('❌ Failed to get candidate analysis:', error)
@@ -492,4 +492,41 @@ export const validateUserDataForAnalysis = (userSurveyData) => {
   })
   
   return hasAnswersForPriorityTopics
+}
+
+/**
+ * Save analysis results to localStorage for history access
+ * @param {Object} electionData - Election data
+ * @param {Object} analysisData - Analysis results
+ * @param {string} sessionId - User session ID
+ */
+export const saveAnalysisToHistory = (electionData, analysisData, sessionId) => {
+  try {
+    const historyItem = {
+      id: `analysis_${electionData.id}_${Date.now()}`,
+      electionData,
+      analysisData,
+      timestamp: new Date().toISOString()
+    }
+
+    // Get existing history
+    const existingHistory = localStorage.getItem(`analysis_history_${sessionId}`)
+    let history = existingHistory ? JSON.parse(existingHistory) : []
+
+    // Add new analysis to the beginning of the array
+    history.unshift(historyItem)
+
+    // Keep only the last 10 analyses to prevent localStorage bloat
+    history = history.slice(0, 10)
+
+    // Save back to localStorage
+    localStorage.setItem(`analysis_history_${sessionId}`, JSON.stringify(history))
+
+    console.log('✅ Analysis saved to history:', historyItem.id)
+    return historyItem
+
+  } catch (error) {
+    console.error('❌ Failed to save analysis to history:', error)
+    return null
+  }
 }
