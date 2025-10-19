@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getElectionDataByAddress } from '../services/ballotpediaResponsesApi'
 import { getUserSurveyData, validateUserDataForAnalysis } from '../services/candidateAnalysisApi'
@@ -9,9 +9,17 @@ function UpcomingElections() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [userAddress, setUserAddress] = useState('')
+  const hasInitialized = useRef(false) // Track if initial fetch has happened
 
   // Get user address from localStorage on component mount
   useEffect(() => {
+    // Prevent duplicate calls in React Strict Mode
+    if (hasInitialized.current) {
+      return
+    }
+    
+    let isMounted = true // Prevent state updates if component unmounts
+    
     const getUserAddress = () => {
       // Try to get address from onboarding data first
       const sessionId = sessionStorage.getItem('user_session_id')
@@ -39,12 +47,22 @@ function UpcomingElections() {
       return null
     }
 
-    const address = getUserAddress()
-    if (address) {
-      setUserAddress(address)
-      fetchElectionData(address)
+    const initializeElectionData = async () => {
+      const address = getUserAddress()
+      if (address && isMounted) {
+        hasInitialized.current = true // Mark as initialized
+        setUserAddress(address)
+        await fetchElectionData(address)
+      }
     }
-  }, [])
+
+    initializeElectionData()
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchElectionData = async (address) => {
     if (!address) {
@@ -75,7 +93,11 @@ function UpcomingElections() {
 
   const formatDate = (dateString) => {
     try {
-      const date = new Date(dateString)
+      // Parse date as local time to avoid timezone conversion issues
+      // Split YYYY-MM-DD and create date in local timezone
+      const [year, month, day] = dateString.split('-').map(Number)
+      const date = new Date(year, month - 1, day) // month is 0-indexed
+      
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',

@@ -12,6 +12,7 @@ import OpinionSurvey from './components/onboarding/OpinionSurvey'
 import Review from './components/onboarding/Review'
 import TestResponsesAPI from './components/TestResponsesAPI'
 import TestCandidateAnalysis from './components/TestCandidateAnalysis'
+import TestBallotpediaResponsesApi from './components/TestBallotpediaResponsesApi'
 import CandidateAnalysis from './components/CandidateAnalysis'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/test-responses" element={<TestResponsesAPI />} />
+          <Route path="/test-ballotpedia" element={<TestBallotpediaResponsesApi />} />
           <Route path="/test-analysis" element={<TestCandidateAnalysis />} />
           <Route 
             path="/analysis/:electionId" 

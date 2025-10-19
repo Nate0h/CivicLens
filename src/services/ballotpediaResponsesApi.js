@@ -6,7 +6,7 @@
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
 
 /**
- * Extract state from address string
+ * Extract state from address stringnpm 
  */
 const extractStateFromAddress = (address) => {
   const statePatterns = {
@@ -47,9 +47,10 @@ const extractStateFromAddress = (address) => {
  * @returns {Promise<Object>} Structured election data
  */
 export const getElectionDataByAddress = async (address, year = 2025) => {
+  const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   try {
-    console.log('🔍 Fetching election data using OpenAI Responses API...')
-    console.log('📍 Address:', address, 'Year:', year)
+    console.log(`🔍 [${requestId}] Fetching election data using OpenAI Responses API...`)
+    console.log(`📍 [${requestId}] Address:`, address, 'Year:', year)
 
     // Extract state from address
     const state = extractStateFromAddress(address)
@@ -64,7 +65,7 @@ export const getElectionDataByAddress = async (address, year = 2025) => {
     // Extract and structure the data
     const structuredData = await extractElectionData(completedResponse)
     
-    console.log('✅ Election data fetched successfully')
+    console.log(`✅ [${requestId}] Election data fetched successfully`)
     return {
       ...structuredData,
       state: state,
@@ -72,7 +73,7 @@ export const getElectionDataByAddress = async (address, year = 2025) => {
     }
 
   } catch (error) {
-    console.error('❌ Failed to fetch election data:', error)
+    console.error(`❌ [${requestId}] Failed to fetch election data:`, error)
     throw new Error(`Failed to get election data: ${error.message}`)
   }
 }
@@ -82,13 +83,15 @@ export const getElectionDataByAddress = async (address, year = 2025) => {
  */
 const createResponseWithWebSearch = async (state, year) => {
   const requestBody = {
-    model: "gpt-4.1",
+    model: "gpt-5",
     tools: [{ 
-    type: "web_search",
+      type: "web_search"
     }],
     tool_choice: "auto",
     include: ["web_search_call.action.sources"],
-    input: `Find who is running for the ${year} ${state} governor and lieutenant governor election, and their party affiliation. Return the data in JSON format with this structure: {"elections": [{"id": "unique_election_id", "name": "Election Name", "electionDay": "YYYY-MM-DD", "office": "Governor", "candidates": [{"name": "Full Candidate Name", "party": "Party Name", "office": "Governor", "candidateUrl": null, "photoUrl": null}]}]}. Focus only on current active candidates and ignore historical data.`
+    input: `Find who is running for the ${year} ${state} governor and lieutenant governor election, and their party affiliation. 
+    IMPORTANT: Create SEPARATE election entries for Governor and Lieutenant Governor races, even if candidates run as a ticket.
+    Return the data in JSON format with this structure: {"elections": [{"id": "unique_election_id", "name": "Election Name", "electionDay": "YYYY-MM-DD", "office": "Governor", "candidates": [{"name": "Full Candidate Name", "party": "Party Name", "office": "Governor", "candidateUrl": null, "photoUrl": null}]}]}. Focus only on current active candidates and ignore historical data.`
   }
 
   const response = await fetch('https://api.openai.com/v1/responses', {
@@ -109,10 +112,18 @@ const createResponseWithWebSearch = async (state, year) => {
 }
 
 /**
- * Poll for response completion
+ * Poll for response completion with progressive intervals
+ * Starts with faster checks and gradually increases interval
  */
-const pollResponseCompletion = async (responseId, maxAttempts = 30, intervalMs = 2000) => {
+const pollResponseCompletion = async (responseId, maxAttempts = 40) => {
   console.log('⏳ Polling for response completion...')
+  
+  // Progressive polling intervals: faster at first, slower later
+  const getInterval = (attempt) => {
+    if (attempt <= 5) return 1000      // First 5 attempts: 1 second
+    if (attempt <= 15) return 2000     // Next 10 attempts: 2 seconds
+    return 3000                         // Remaining attempts: 3 seconds
+  }
   
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -130,7 +141,8 @@ const pollResponseCompletion = async (responseId, maxAttempts = 30, intervalMs =
       const data = await response.json()
       
       if (data.status === 'completed') {
-        console.log('✅ Response completed')
+        const totalTime = (attempt <= 5 ? attempt * 1 : 5 + (attempt - 5) * 2)
+        console.log(`✅ Response completed in ~${totalTime} seconds`)
         return data
       } else if (data.status === 'failed') {
         throw new Error(`Response failed: ${data.error?.message || 'Unknown error'}`)
@@ -139,18 +151,20 @@ const pollResponseCompletion = async (responseId, maxAttempts = 30, intervalMs =
       console.log(`⏳ Attempt ${attempt}/${maxAttempts} - Status: ${data.status}`)
       
       if (attempt < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, intervalMs))
+        const interval = getInterval(attempt)
+        await new Promise(resolve => setTimeout(resolve, interval))
       }
     } catch (error) {
       if (attempt === maxAttempts) {
         throw error
       }
       console.log(`⚠️ Polling attempt ${attempt} failed, retrying...`)
-      await new Promise(resolve => setTimeout(resolve, intervalMs))
+      const interval = getInterval(attempt)
+      await new Promise(resolve => setTimeout(resolve, interval))
     }
   }
   
-  throw new Error('Response polling timed out')
+  throw new Error('Response polling timed out after ~90 seconds')
 }
 
 /**
@@ -183,15 +197,28 @@ const extractElectionData = async (completedResponse) => {
     const responseContent = textContent.text
     console.log('📥 Raw response content:', responseContent)
 
-    // Extract JSON from the text (it's wrapped in ```json blocks)
-    const jsonMatch = responseContent.match(/```json\s*([\s\S]*?)\s*```/)
-    
-    if (!jsonMatch) {
-      throw new Error('No JSON block found in response')
+    // Parse direct JSON from GPT-5
+    let structuredData
+    try {
+      structuredData = JSON.parse(responseContent.trim())
+      console.log('✅ Parsed JSON successfully:', JSON.stringify(structuredData, null, 2))
+    } catch (parseError) {
+      console.warn('⚠️ Direct JSON parse failed, trying fallback...', parseError.message)
+      // Fallback: try to find JSON object in the text
+      const directJsonMatch = responseContent.match(/{[\s\S]*}/)
+      if (!directJsonMatch) {
+        throw new Error('No valid JSON found in response')
+      }
+      structuredData = JSON.parse(directJsonMatch[0])
+      console.log('✅ Parsed JSON with fallback:', JSON.stringify(structuredData, null, 2))
     }
-
-    const jsonString = jsonMatch[1].trim()
-    const structuredData = JSON.parse(jsonString)
+    
+    // Log election dates for debugging
+    if (structuredData.elections) {
+      structuredData.elections.forEach((election, index) => {
+        console.log(`📅 Election ${index + 1}: ${election.name} - Date: ${election.electionDay}`)
+      })
+    }
     
     // Add metadata
     return {
